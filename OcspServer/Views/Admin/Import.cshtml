@@ -1,0 +1,140 @@
+@model OcspServer.Controllers.ImportViewModel
+@{
+    ViewData["Title"] = "Import Certificate Data";
+}
+
+<h1 class="h3 mb-4">Import Certificate Data</h1>
+
+@if (!string.IsNullOrEmpty(Model?.StatusMessage))
+{
+    <div class="alert alert-info">@Model.StatusMessage</div>
+}
+
+<ul class="nav nav-tabs mb-4" id="importTabs" role="tablist">
+    <li class="nav-item">
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-indexfile">
+            OpenSSL index.txt
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-textfile">
+            Text File
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-proxy">
+            Live OCSP Proxy
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content">
+
+    <!-- index.txt -->
+    <div class="tab-pane fade show active" id="tab-indexfile">
+        <div class="card">
+            <div class="card-header">Import from OpenSSL CA index.txt</div>
+            <div class="card-body">
+                <p class="text-muted small">
+                    Standard OpenSSL CA database format produced by <code>openssl ca</code> on the offline OpenBSD CA.
+                    Each line: <code>Flag TAB ExpDate TAB RevDate TAB Serial TAB Filename TAB Subject</code>
+                </p>
+                <form method="post"
+                      asp-controller="Admin" asp-action="ImportIndexFile"
+                      enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label">index.txt file</label>
+                        <input type="file" name="file" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Issuer DN <span class="text-muted">(optional)</span></label>
+                        <input type="text" name="issuerDn" class="form-control font-monospace"
+                               placeholder="e.g. /C=US/O=My CA/CN=Root CA" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Issuer Key Hash SHA-1 (hex) <span class="text-muted">(optional)</span></label>
+                        <input type="text" name="issuerKeyHashSha1" class="form-control font-monospace"
+                               placeholder="40 hex chars" maxlength="40" />
+                        <div class="form-text">
+                            Get from: <code>openssl x509 -in ca.crt -noout -pubkey | openssl dgst -sha1</code>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Issuer Key Hash SHA-256 (hex) <span class="text-muted">(optional)</span></label>
+                        <input type="text" name="issuerKeyHashSha256" class="form-control font-monospace"
+                               placeholder="64 hex chars" maxlength="64" />
+                    </div>
+                    <button type="submit" class="btn btn-primary">Import index.txt</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Text file -->
+    <div class="tab-pane fade" id="tab-textfile">
+        <div class="card">
+            <div class="card-header">Import from Text File</div>
+            <div class="card-body">
+                <p class="text-muted small">
+                    Simple text format: one certificate per line.
+                    Format: <code>SERIAL  STATUS  [REVDATE]</code><br />
+                    STATUS values: <code>good</code>, <code>revoked</code>, <code>unknown</code><br />
+                    Example: <code>0A1B2C  revoked  2024-06-01T00:00:00Z</code>
+                </p>
+                <form method="post"
+                      asp-controller="Admin" asp-action="ImportTextFile"
+                      enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label">Text file</label>
+                        <input type="file" name="file" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Issuer Key Hash SHA-1 (hex) <span class="text-muted">(optional)</span></label>
+                        <input type="text" name="issuerKeyHashSha1" class="form-control font-monospace"
+                               placeholder="40 hex chars" maxlength="40" />
+                    </div>
+                    <button type="submit" class="btn btn-primary">Import Text File</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- OCSP proxy -->
+    <div class="tab-pane fade" id="tab-proxy">
+        <div class="card">
+            <div class="card-header">Sync from Local OCSP Responder</div>
+            <div class="card-body">
+                <p class="text-muted small">
+                    Provide a DER-encoded OCSPRequest (hex) and the base URL of a running
+                    <code>openssl ocsp</code> instance to pull live status updates.
+                </p>
+                <form method="post" asp-controller="Admin" asp-action="ImportOcspProxy">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label">Responder URL</label>
+                        <input type="url" name="responderUrl" class="form-control"
+                               placeholder="http://127.0.0.1:2560" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">OCSPRequest (DER hex)</label>
+                        <textarea name="requestHex" class="form-control font-monospace"
+                                  rows="4" placeholder="3082..." required></textarea>
+                        <div class="form-text">
+                            Generate with:
+                            <code>openssl ocsp -issuer ca.crt -cert leaf.crt -reqout req.der &amp;&amp; xxd -p req.der</code>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Issuer Key Hash SHA-1 (hex)</label>
+                        <input type="text" name="issuerKeyHashSha1" class="form-control font-monospace"
+                               placeholder="40 hex chars" maxlength="40" required />
+                    </div>
+                    <button type="submit" class="btn btn-primary">Sync Now</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>

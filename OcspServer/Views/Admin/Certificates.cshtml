@@ -1,0 +1,114 @@
+@model OcspServer.Controllers.CertificateListViewModel
+@using OcspServer.Models
+@{
+    ViewData["Title"] = "Certificates";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3">Certificates</h1>
+    <a asp-controller="Admin" asp-action="Import" class="btn btn-primary btn-sm">Import</a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Warning"] != null)
+{
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        @TempData["Warning"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+        <input type="text" name="search" value="@Model.Search"
+               class="form-control" placeholder="Search serial or subject…" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-secondary">Search</button>
+        @if (!string.IsNullOrEmpty(Model.Search))
+        {
+            <a asp-controller="Admin" asp-action="Certificates" class="btn btn-link">Clear</a>
+        }
+    </div>
+</form>
+
+<p class="text-muted small">
+    Showing @(((Model.Page - 1) * Model.PageSize) + 1)–@(Math.Min(Model.Page * Model.PageSize, Model.TotalCount))
+    of @Model.TotalCount certificates
+    @if (!string.IsNullOrEmpty(Model.Search)) { <span>matching "@Model.Search"</span> }
+</p>
+
+<div class="table-responsive">
+    <table class="table table-sm table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Serial</th>
+                <th>Subject</th>
+                <th>Status</th>
+                <th>Revocation Date</th>
+                <th>Reason</th>
+                <th>Expires</th>
+                <th>Source</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var cert in Model.Records)
+            {
+                <tr class="@(cert.Status == CertificateStatus.Revoked ? "table-danger" : cert.Status == CertificateStatus.Unknown ? "table-warning" : "")">
+                    <td><code class="small">@cert.SerialNumber</code></td>
+                    <td class="text-truncate" style="max-width:220px" title="@cert.SubjectDN">@cert.SubjectDN</td>
+                    <td>
+                        @switch (cert.Status)
+                        {
+                            case CertificateStatus.Good:
+                                <span class="badge bg-success">Good</span>
+                                break;
+                            case CertificateStatus.Revoked:
+                                <span class="badge bg-danger">Revoked</span>
+                                break;
+                            default:
+                                <span class="badge bg-warning text-dark">Unknown</span>
+                                break;
+                        }
+                    </td>
+                    <td>@(cert.RevocationDate.HasValue ? cert.RevocationDate.Value.ToString("yyyy-MM-dd") : "—")</td>
+                    <td>@(cert.Status == CertificateStatus.Revoked ? cert.RevocationReason.ToString() : "—")</td>
+                    <td>@(cert.NotAfter == DateTime.MinValue ? "—" : cert.NotAfter.ToString("yyyy-MM-dd"))</td>
+                    <td class="small text-muted">@cert.ImportSource</td>
+                    <td class="text-nowrap">
+                        <a asp-controller="Admin" asp-action="Detail"
+                           asp-route-id="@cert.Id" class="btn btn-outline-secondary btn-sm">Detail</a>
+                        @if (cert.Status != CertificateStatus.Revoked)
+                        {
+                            <a asp-controller="Admin" asp-action="Revoke"
+                               asp-route-id="@cert.Id" class="btn btn-outline-danger btn-sm ms-1">Revoke</a>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (Model.TotalPages > 1)
+{
+    <nav>
+        <ul class="pagination pagination-sm">
+            @for (int p = 1; p <= Model.TotalPages; p++)
+            {
+                <li class="page-item @(p == Model.Page ? "active" : "")">
+                    <a class="page-link"
+                       asp-controller="Admin" asp-action="Certificates"
+                       asp-route-page="@p" asp-route-search="@Model.Search">@p</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}
