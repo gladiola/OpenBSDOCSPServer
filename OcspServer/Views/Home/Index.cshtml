@@ -1,0 +1,36 @@
+﻿@{
+    ViewData["Title"] = "OCSP Responder";
+}
+
+<div class="text-center mt-4">
+    <h1 class="display-5">OCSP Responder</h1>
+    <p class="lead text-muted">RFC 6960 / RFC 5019 Online Certificate Status Protocol service</p>
+</div>
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-8">
+        <div class="card mb-3">
+            <div class="card-header">OCSP Query Endpoint</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-3">POST</dt>
+                    <dd class="col-sm-9"><code>/ocsp</code> — body: DER <code>application/ocsp-request</code></dd>
+                    <dt class="col-sm-3">GET</dt>
+                    <dd class="col-sm-9"><code>/ocsp/{base64url-encoded-request}</code></dd>
+                </dl>
+                <p class="mt-2 mb-0 text-muted small">
+                    Responses are DER-encoded <code>application/ocsp-response</code>.
+                    No authentication required for queries.
+                </p>
+            </div>
+        </div>
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <a asp-controller="Admin" asp-action="Dashboard" class="btn btn-primary">Admin Dashboard</a>
+        }
+        else
+        {
+            <a asp-controller="Account" asp-action="Login" class="btn btn-outline-secondary">Admin Login</a>
+        }
+    </div>
+</div>

@@ -1,0 +1,58 @@
+@model OcspServer.Models.ImportResult
+@{
+    ViewData["Title"] = "Import Result";
+}
+
+<h1 class="h3 mb-4">Import Result</h1>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-4">
+        <div class="card text-bg-success">
+            <div class="card-body text-center">
+                <div class="fs-2 fw-bold">@Model.Added</div>
+                <div>Added</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="card text-bg-info">
+            <div class="card-body text-center">
+                <div class="fs-2 fw-bold">@Model.Updated</div>
+                <div>Updated</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4">
+        <div class="card @(Model.Errors.Count > 0 ? "text-bg-danger" : "text-bg-secondary")">
+            <div class="card-body text-center">
+                <div class="fs-2 fw-bold">@Model.Errors.Count</div>
+                <div>Errors</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<dl class="row">
+    <dt class="col-sm-2">Source</dt>
+    <dd class="col-sm-10">@Model.Source</dd>
+    <dt class="col-sm-2">Imported At</dt>
+    <dd class="col-sm-10">@Model.ImportedAt.ToString("yyyy-MM-dd HH:mm:ss UTC")</dd>
+    <dt class="col-sm-2">Unchanged</dt>
+    <dd class="col-sm-10">@Model.Unchanged</dd>
+</dl>
+
+@if (Model.Errors.Count > 0)
+{
+    <h5 class="text-danger mt-3">Errors</h5>
+    <ul class="list-group">
+        @foreach (var err in Model.Errors)
+        {
+            <li class="list-group-item list-group-item-danger small">@err</li>
+        }
+    </ul>
+}
+
+<div class="mt-4">
+    <a asp-controller="Admin" asp-action="Certificates" class="btn btn-primary">View Certificates</a>
+    <a asp-controller="Admin" asp-action="Import" class="btn btn-outline-secondary ms-2">Import More</a>
+</div>
