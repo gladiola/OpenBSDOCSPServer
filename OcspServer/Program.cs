@@ -30,8 +30,12 @@ namespace OcspServer
             if (flags.EnableSession)
                 builder.Services.AddSessionConfiguration(logger, adminAuthSettings.SessionTimeoutMinutes);
 
-            // ── Admin authentication (local cookie) ────────────────────────
-            if (flags.EnableAdminAuth)
+            // ── Admin authentication (local cookie or Entra ID) ────────────────
+            if (flags.EnableEntraIdAuth)
+            {
+                builder.Services.AddEntraIdAdminAuthentication(configuration, logger);
+            }
+            else if (flags.EnableAdminAuth)
             {
                 builder.Services.AddAdminAuthentication(logger);
             }
@@ -50,7 +54,7 @@ namespace OcspServer
             // ── OCSP engine & certificate store ────────────────────────────
             builder.Services.AddCertificateStore(configuration, logger);
             builder.Services.AddOcspServices(configuration, logger);
-            builder.Services.AddIngestionServices();
+            builder.Services.AddIngestionServices(flags.EnableIndexTxtWatch);
 
             // ── MVC ────────────────────────────────────────────────────────
             builder.Services.AddControllersWithViews();

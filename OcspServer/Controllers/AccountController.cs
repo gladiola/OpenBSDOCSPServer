@@ -2,17 +2,26 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using OcspServer.Models.Settings;
 
 namespace OcspServer.Controllers
 {
     /// <summary>
-    /// Handles admin login / logout using local cookie authentication.
-    /// Credentials are validated against the PBKDF2-HMAC-SHA256 hash stored
-    /// in AdminAuthSettings (from appsettings.json / user secrets).
+    /// Handles admin login / logout.
     ///
-    /// Hash format: "iterations:base64salt:base64hash"
+    /// When <see cref="FeatureFlags.EnableEntraIdAuth"/> is true:
+    ///   – GET /account/login   → challenges Entra ID via OIDC (no local form).
+    ///   – POST /account/logout → signs out of both OIDC and the OIDC cookie.
+    ///
+    /// When <see cref="FeatureFlags.EnableAdminAuth"/> is true (local auth):
+    ///   – GET  /account/login  → renders the local credentials form.
+    ///   – POST /account/login  → validates PBKDF2 hash and issues AdminCookie.
+    ///   – POST /account/logout → signs out of AdminCookie.
+    ///
+    /// Hash format for local auth: "iterations:base64salt:base64hash"
     /// Generate via: dotnet run --project OcspServer -- hash-password
     /// </summary>
     [Route("account")]
@@ -20,10 +29,15 @@ namespace OcspServer.Controllers
     {
         private readonly AdminAuthSettings _authSettings;
         private readonly ILogger<AccountController> _logger;
+        private readonly FeatureFlags _flags;
 
-        public AccountController(AdminAuthSettings authSettings, ILogger<AccountController> logger)
+        public AccountController(
+            AdminAuthSettings authSettings,
+            IOptionsMonitor<FeatureFlags> flagsMonitor,
+            ILogger<AccountController> logger)
         {
             _authSettings = authSettings;
+            _flags = flagsMonitor.CurrentValue;
             _logger = logger;
         }
 
@@ -32,6 +46,15 @@ namespace OcspServer.Controllers
         {
             if (User.Identity?.IsAuthenticated == true)
                 return RedirectToAdminDashboard(returnUrl);
+
+            // When EntraID auth is active, challenge with OIDC immediately.
+            if (_flags.EnableEntraIdAuth)
+            {
+                var redirectUrl = Url.Action("Dashboard", "Admin") ?? "/admin";
+                return Challenge(
+                    new AuthenticationProperties { RedirectUri = redirectUrl },
+                    OpenIdConnectDefaults.AuthenticationScheme);
+            }
 
             ViewData["ReturnUrl"] = returnUrl;
             return View();
@@ -42,6 +65,10 @@ namespace OcspServer.Controllers
         public async Task<IActionResult> Login(
             string username, string password, string? returnUrl = null)
         {
+            // This POST action is only reached in local-auth mode.
+            if (_flags.EnableEntraIdAuth)
+                return RedirectToAdminDashboard(returnUrl);
+
             ViewData["ReturnUrl"] = returnUrl;
 
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
@@ -84,6 +111,16 @@ namespace OcspServer.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
+            if (_flags.EnableEntraIdAuth)
+            {
+                // Sign out of both the OIDC session and the OIDC cookie.
+                await HttpContext.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme);
+                await HttpContext.SignOutAsync(
+                    Microsoft.AspNetCore.Authentication.Cookies
+                        .CookieAuthenticationDefaults.AuthenticationScheme);
+                return RedirectToAction(nameof(Login));
+            }
+
             await HttpContext.SignOutAsync("AdminCookie");
             return RedirectToAction(nameof(Login));
         }
