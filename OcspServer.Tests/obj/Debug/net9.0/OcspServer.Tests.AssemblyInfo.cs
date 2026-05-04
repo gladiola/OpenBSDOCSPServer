@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("OcspServer.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+53c8145357e1b46fe70e262c5538b51513f7e840")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+04cb42e7bc4ded042a2342ffc6b293ddc422a047")]
 [assembly: System.Reflection.AssemblyProductAttribute("OcspServer.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("OcspServer.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

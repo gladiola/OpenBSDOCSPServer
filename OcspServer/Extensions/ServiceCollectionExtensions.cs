@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.Certificate;
+using Microsoft.Identity.Web;
 using OcspServer.Models.Settings;
 using OcspServer.Services.CertificateStore;
 using OcspServer.Services.Ingestion;
@@ -95,6 +96,50 @@ namespace OcspServer.Extensions
             return services;
         }
 
+        /// <summary>
+        /// Register Azure Entra ID (Azure AD) OpenID Connect authentication for the admin UI.
+        ///
+        /// When this is active the <c>AdminOnly</c> policy requires an authenticated
+        /// Entra ID user.  If <see cref="AzureAdSettings.AdminGroupId"/> is set, the user
+        /// must also be a member of that security group (exposed as a "groups" claim).
+        ///
+        /// Reads configuration from the "AzureAd" section of appsettings.json.
+        /// </summary>
+        public static IServiceCollection AddEntraIdAdminAuthentication(
+            this IServiceCollection services, IConfiguration configuration, ILogger logger)
+        {
+            var azureAdSettings = configuration.GetSection("AzureAd").Get<AzureAdSettings>()
+                ?? new AzureAdSettings();
+            services.AddSingleton(azureAdSettings);
+
+            services.AddAuthentication(Microsoft.AspNetCore.Authentication.OpenIdConnect
+                        .OpenIdConnectDefaults.AuthenticationScheme)
+                     .AddMicrosoftIdentityWebApp(configuration.GetSection("AzureAd"));
+
+            var adminGroupId = azureAdSettings.AdminGroupId;
+
+            services.AddAuthorization(opts =>
+            {
+                opts.AddPolicy("AdminOnly", policy =>
+                {
+                    policy.RequireAuthenticatedUser();
+                    if (!string.IsNullOrWhiteSpace(adminGroupId))
+                    {
+                        // Require membership in the configured Entra security group.
+                        // The "groups" claim is populated when group claims are enabled
+                        // in the Entra app registration manifest.
+                        policy.RequireClaim("groups", adminGroupId);
+                    }
+                });
+            });
+
+            logger.LogInformation(
+                "Entra ID admin authentication configured (group filter: {Group})",
+                string.IsNullOrWhiteSpace(adminGroupId) ? "none" : adminGroupId);
+
+            return services;
+        }
+
         /// <summary>Register all OCSP engine services.</summary>
         public static IServiceCollection AddOcspServices(
             this IServiceCollection services, IConfiguration configuration, ILogger logger)
@@ -132,11 +177,15 @@ namespace OcspServer.Extensions
 
         /// <summary>Register ingestion services.</summary>
         public static IServiceCollection AddIngestionServices(
-            this IServiceCollection services)
+            this IServiceCollection services, bool enableIndexTxtWatch = false)
         {
             services.AddHttpClient<LiveOcspProxyImporter>();
             services.AddTransient<OpenSslIndexParser>();
             services.AddTransient<TextFileImporter>();
+
+            if (enableIndexTxtWatch)
+                services.AddHostedService<IndexTxtWatcherService>();
+
             return services;
         }
     }

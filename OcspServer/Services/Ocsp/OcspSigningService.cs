@@ -1,13 +1,20 @@
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.OpenSsl;
+using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
 using OcspServer.Models.Settings;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 
 namespace OcspServer.Services.Ocsp
 {
     /// <summary>
-    /// Loads the OCSP signing certificate and private key from PEM files on disk.
+    /// Loads the OCSP signing certificate and private key from either:
+    ///   • a PKCS#12 (.pfx) file (when <see cref="OcspServerSettings.PfxPath"/> is set), or
+    ///   • PEM files on disk (legacy path via <see cref="OcspServerSettings.ResponderCertPath"/>
+    ///     / <see cref="OcspServerSettings.SigningKeyPath"/>).
+    ///
     /// The certificate must have been issued by the offline OpenBSD CA and should
     /// carry the id-kp-OCSPSigning extended key usage (OID 1.3.6.1.5.5.7.3.9).
     ///
@@ -50,6 +57,74 @@ namespace OcspServer.Services.Ocsp
 
         private void Load()
         {
+            if (!string.IsNullOrWhiteSpace(_settings.PfxPath))
+            {
+                LoadFromPfx();
+            }
+            else
+            {
+                LoadFromPem();
+            }
+        }
+
+        // ── PFX / PKCS#12 loader ─────────────────────────────────────────────
+
+        private void LoadFromPfx()
+        {
+            _logger.LogInformation("Loading OCSP signing credentials from PFX {PfxPath}",
+                _settings.PfxPath);
+
+            // X509CertificateLoader is the .NET 9 recommended API for loading PFX files.
+            // LoadPkcs12FromFile accepts an optional password and storage flags; we request
+            // Exportable so we can extract the raw key bytes for BouncyCastle conversion.
+            var flags = X509KeyStorageFlags.Exportable | X509KeyStorageFlags.MachineKeySet;
+            using var dotNetCert = System.Security.Cryptography.X509Certificates
+                .X509CertificateLoader.LoadPkcs12FromFile(
+                    _settings.PfxPath!,
+                    _settings.PfxPassword,
+                    flags);
+
+            // Convert the .NET cert to a BouncyCastle cert.
+            var bcCert = DotNetUtilities.FromX509Certificate(dotNetCert);
+
+            // Extract and convert the private key to BouncyCastle.
+            AsymmetricKeyParameter? bcPrivateKey = null;
+
+            var rsaKey = dotNetCert.GetRSAPrivateKey();
+            if (rsaKey != null)
+            {
+                // Export as PKCS#8 DER, then import into BouncyCastle.
+                byte[] pkcs8Der = rsaKey.ExportPkcs8PrivateKey();
+                bcPrivateKey = PrivateKeyFactory.CreateKey(pkcs8Der);
+            }
+            else
+            {
+                var ecdsaKey = dotNetCert.GetECDsaPrivateKey();
+                if (ecdsaKey != null)
+                {
+                    byte[] pkcs8Der = ecdsaKey.ExportPkcs8PrivateKey();
+                    bcPrivateKey = PrivateKeyFactory.CreateKey(pkcs8Der);
+                }
+            }
+
+            if (bcPrivateKey == null)
+                throw new InvalidOperationException(
+                    $"Could not extract RSA or ECDSA private key from PFX {_settings.PfxPath}");
+
+            _privateKey = bcPrivateKey;
+            _publicKey = bcCert.GetPublicKey();
+            _chain = new[] { bcCert };
+            _sigAlgorithmName = ResolveSigningAlgorithm(_privateKey);
+
+            _logger.LogInformation(
+                "OCSP signing credentials loaded from PFX. Algorithm: {Alg}, Subject: {Subject}",
+                _sigAlgorithmName, bcCert.SubjectDN);
+        }
+
+        // ── PEM loader ────────────────────────────────────────────────────────
+
+        private void LoadFromPem()
+        {
             _logger.LogInformation("Loading OCSP signing credentials from {CertPath} / {KeyPath}",
                 _settings.ResponderCertPath, _settings.SigningKeyPath);
 
@@ -83,18 +158,22 @@ namespace OcspServer.Services.Ocsp
             _privateKey = keyPair.Private;
             _publicKey = cert.GetPublicKey();
             _chain = new[] { cert };
-
-            _sigAlgorithmName = _privateKey switch
-            {
-                RsaKeyParameters => "SHA256withRSA",
-                ECPrivateKeyParameters => "SHA256withECDSA",
-                _ => throw new NotSupportedException(
-                    $"Unsupported signing key type: {_privateKey.GetType().Name}")
-            };
+            _sigAlgorithmName = ResolveSigningAlgorithm(_privateKey);
 
             _logger.LogInformation("OCSP signing credentials loaded. Algorithm: {Alg}, Subject: {Subject}",
                 _sigAlgorithmName, cert.SubjectDN);
         }
+
+        // ── Helpers ──────────────────────────────────────────────────────────
+
+        private static string ResolveSigningAlgorithm(AsymmetricKeyParameter key) =>
+            key switch
+            {
+                RsaKeyParameters => "SHA256withRSA",
+                ECPrivateKeyParameters => "SHA256withECDSA",
+                _ => throw new NotSupportedException(
+                    $"Unsupported signing key type: {key.GetType().Name}")
+            };
 
         private sealed class PasswordFinder : IPasswordFinder
         {
