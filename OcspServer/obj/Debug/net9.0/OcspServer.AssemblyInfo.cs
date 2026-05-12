@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("OcspServer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b4fee655790b0d3d4005aacd4caef49e8cb3e7b6")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b460392eb0832bdd9ccf706b1a3026a23877e669")]
 [assembly: System.Reflection.AssemblyProductAttribute("OcspServer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("OcspServer")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
