@@ -1,33 +1,33 @@
 @model OcspServer.Models.CertificateRecord
 @using OcspServer.Models
 @{
-    ViewData["Title"] = $"Revoke {Model.SerialNumber}";
+    ViewData["Title"] = L["RevokePageTitle", Model.SerialNumber];
 }
 
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a asp-controller="Admin" asp-action="Certificates">Certificates</a></li>
+        <li class="breadcrumb-item"><a asp-controller="Admin" asp-action="Certificates">@L["CertificatesHeading"]</a></li>
         <li class="breadcrumb-item">
             <a asp-controller="Admin" asp-action="Detail" asp-route-id="@Model.Id">@Model.SerialNumber</a>
         </li>
-        <li class="breadcrumb-item active">Revoke</li>
+        <li class="breadcrumb-item active">@L["RevokeButton"]</li>
     </ol>
 </nav>
 
 <div class="card border-danger">
     <div class="card-header bg-danger text-white">
-        <h4 class="mb-0">Confirm Revocation</h4>
+        <h4 class="mb-0">@L["RevokeConfirmHeading"]</h4>
     </div>
     <div class="card-body">
-        <p>You are about to revoke the following certificate. This action is recorded immediately and will be reflected in all subsequent OCSP responses.</p>
+        <p>@L["RevokeDescription"]</p>
 
         <dl class="row">
-            <dt class="col-sm-3">Serial</dt>
+            <dt class="col-sm-3">@L["CertificatesSerial"]</dt>
             <dd class="col-sm-9"><code>@Model.SerialNumber</code></dd>
-            <dt class="col-sm-3">Subject</dt>
+            <dt class="col-sm-3">@L["CertificatesSubject"]</dt>
             <dd class="col-sm-9"><code>@Model.SubjectDN</code></dd>
-            <dt class="col-sm-3">Expires</dt>
-            <dd class="col-sm-9">@(Model.NotAfter == DateTime.MinValue ? "—" : Model.NotAfter.ToString("yyyy-MM-dd"))</dd>
+            <dt class="col-sm-3">@L["CertificatesExpires"]</dt>
+            <dd class="col-sm-9">@(Model.NotAfter == DateTime.MinValue ? L["NotAvailableDash"].Value : Model.NotAfter.ToString("yyyy-MM-dd"))</dd>
         </dl>
 
         <form method="post"
@@ -35,7 +35,7 @@
               asp-route-id="@Model.Id">
             @Html.AntiForgeryToken()
             <div class="mb-3">
-                <label for="reason" class="form-label fw-bold">Revocation Reason</label>
+                <label for="reason" class="form-label fw-bold">@L["RevokeReasonLabel"]</label>
                 <select name="reason" id="reason" class="form-select" style="max-width:300px">
                     @foreach (RevocationReason r in Enum.GetValues(typeof(RevocationReason)))
                     {
@@ -44,8 +44,8 @@
                 </select>
             </div>
             <a asp-controller="Admin" asp-action="Detail" asp-route-id="@Model.Id"
-               class="btn btn-secondary me-2">Cancel</a>
-            <button type="submit" class="btn btn-danger">Revoke Certificate</button>
+               class="btn btn-secondary me-2">@L["CancelButton"]</a>
+            <button type="submit" class="btn btn-danger">@L["RevokeCertificateButton"]</button>
         </form>
     </div>
 </div>

@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using OcspServer.Models;
 using OcspServer.Models.Settings;
+using OcspServer.Resources;
 using OcspServer.Services.CertificateStore;
 using OcspServer.Services.Ingestion;
 using OcspServer.Services.Ocsp;
@@ -16,16 +18,19 @@ namespace OcspServer.Controllers
         private readonly ILogger<AdminController> _logger;
         private readonly OcspServerSettings _ocspSettings;
         private readonly OcspSigningService _signingService;
+        private readonly IStringLocalizer<SharedResource> _localizer;
 
         public AdminController(
             ICertificateStoreService store,
             OcspServerSettings ocspSettings,
             OcspSigningService signingService,
+            IStringLocalizer<SharedResource> localizer,
             ILogger<AdminController> logger)
         {
             _store = store;
             _ocspSettings = ocspSettings;
             _signingService = signingService;
+            _localizer = localizer;
             _logger = logger;
         }
 
@@ -98,7 +103,7 @@ namespace OcspServer.Controllers
             var record = await _store.GetByIdAsync(id);
             if (record == null) return NotFound();
             await _store.UpdateNotesAsync(id, notes);
-            TempData["Success"] = "Notes updated.";
+            TempData["Success"] = _localizer["SuccessNotesUpdated"];
             return RedirectToAction(nameof(Detail), new { id });
         }
 
@@ -111,7 +116,7 @@ namespace OcspServer.Controllers
             if (record == null) return NotFound();
             if (record.Status == CertificateStatus.Revoked)
             {
-                TempData["Warning"] = "Certificate is already revoked.";
+                TempData["Warning"] = _localizer["WarningAlreadyRevoked"];
                 return RedirectToAction(nameof(Detail), new { id });
             }
             return View(record);
@@ -134,7 +139,7 @@ namespace OcspServer.Controllers
             _logger.LogWarning("Certificate REVOKED: serial={Serial} reason={Reason} by admin",
                 record.SerialNumber, reason);
 
-            TempData["Success"] = $"Certificate {record.SerialNumber} revoked ({reason}).";
+            TempData["Success"] = _localizer["SuccessCertificateRevoked", record.SerialNumber, reason];
             return RedirectToAction(nameof(Certificates));
         }
 
@@ -151,7 +156,7 @@ namespace OcspServer.Controllers
                 record.RevocationReason != RevocationReason.CertificateHold)
             {
                 TempData["Warning"] =
-                    "Only certificates on CertificateHold can be reinstated.";
+                    _localizer["WarningOnlyCertificateHoldReinstate"];
                 return RedirectToAction(nameof(Detail), new { id });
             }
 
@@ -163,7 +168,7 @@ namespace OcspServer.Controllers
                 "manual");
 
             _logger.LogInformation("Certificate REINSTATED: serial={Serial}", record.SerialNumber);
-            TempData["Success"] = $"Certificate {record.SerialNumber} reinstated.";
+            TempData["Success"] = _localizer["SuccessCertificateReinstated", record.SerialNumber];
             return RedirectToAction(nameof(Certificates));
         }
 
@@ -183,7 +188,7 @@ namespace OcspServer.Controllers
         {
             if (file == null || file.Length == 0)
             {
-                ModelState.AddModelError("", "Please select an index.txt file.");
+                ModelState.AddModelError("", _localizer["ErrorSelectIndexFile"]);
                 return View("Import", new ImportViewModel());
             }
 
@@ -229,7 +234,7 @@ namespace OcspServer.Controllers
         {
             if (file == null || file.Length == 0)
             {
-                ModelState.AddModelError("", "Please select a text file.");
+                ModelState.AddModelError("", _localizer["ErrorSelectTextFile"]);
                 return View("Import", new ImportViewModel());
             }
 
@@ -271,7 +276,7 @@ namespace OcspServer.Controllers
         {
             if (string.IsNullOrWhiteSpace(responderUrl) || string.IsNullOrWhiteSpace(requestHex))
             {
-                ModelState.AddModelError("", "Responder URL and request hex are required.");
+                ModelState.AddModelError("", _localizer["ErrorResponderUrlAndRequestHexRequired"]);
                 return View("Import", new ImportViewModel());
             }
 
@@ -282,7 +287,7 @@ namespace OcspServer.Controllers
             }
             catch
             {
-                ModelState.AddModelError("", "Invalid hex-encoded DER request.");
+                ModelState.AddModelError("", _localizer["ErrorInvalidHexDerRequest"]);
                 return View("Import", new ImportViewModel());
             }
 

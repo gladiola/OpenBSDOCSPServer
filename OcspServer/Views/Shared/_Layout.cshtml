@@ -1,9 +1,9 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="@CultureInfo.CurrentUICulture.Name" dir="@(CultureInfo.CurrentUICulture.TextInfo.IsRightToLeft ? "rtl" : "ltr")">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - OCSP Server</title>
+    <title>@ViewData["Title"] - @L["SiteName"]</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/OcspServer.styles.css" asp-append-version="true" />
@@ -12,30 +12,92 @@
     <header>
         <nav class="navbar navbar-expand-sm navbar-dark bg-dark border-bottom mb-3">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-controller="Home" asp-action="Index">OCSP Server</a>
+                <a class="navbar-brand" asp-controller="Home" asp-action="Index">@L["SiteName"]</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                        data-bs-target=".navbar-collapse" aria-label="Toggle navigation">
+                        data-bs-target=".navbar-collapse" aria-label="@L["ToggleNavigation"]">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-white" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link text-white" asp-controller="Home" asp-action="Index">@L["NavHome"]</a>
                         </li>
                         @if (User.Identity?.IsAuthenticated == true)
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-white" asp-controller="Admin" asp-action="Dashboard">Dashboard</a>
+                                <a class="nav-link text-white" asp-controller="Admin" asp-action="Dashboard">@L["NavDashboard"]</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-white" asp-controller="Admin" asp-action="Certificates">Certificates</a>
+                                <a class="nav-link text-white" asp-controller="Admin" asp-action="Certificates">@L["NavCertificates"]</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-white" asp-controller="Admin" asp-action="Import">Import</a>
+                                <a class="nav-link text-white" asp-controller="Admin" asp-action="Import">@L["NavImport"]</a>
                             </li>
                         }
                     </ul>
                     <ul class="navbar-nav">
+                        <li class="nav-item dropdown me-2">
+                            <a class="nav-link dropdown-toggle text-white" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                @L["Language"]
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                @{
+                                    var languages = new[]
+                                    {
+                                        ("en-US", "English (US)"),
+                                        ("de-DE", "Deutsch"),
+                                        ("es-ES", "Español"),
+                                        ("fr-FR", "Français"),
+                                        ("pt-PT", "Português"),
+                                        ("it-IT", "Italiano"),
+                                        ("zh-HK", "廣東話"),
+                                        ("ko-KR", "한국어"),
+                                        ("hi-IN", "हिन्दी"),
+                                        ("ru-RU", "Русский"),
+                                        ("ar-SA", "العربية"),
+                                        ("sw-KE", "Kiswahili"),
+                                        ("ja-JP", "日本語"),
+                                        ("ht-HT", "Kreyòl ayisyen"),
+                                        ("haw-US", "ʻŌlelo Hawaiʻi"),
+                                        ("sm-WS", "Gagana Sāmoa"),
+                                        ("mi-NZ", "Te Reo Māori"),
+                                        ("af-ZA", "Afrikaans"),
+                                        ("nl-NL", "Nederlands"),
+                                        ("ha-NG", "Hausa"),
+                                        ("am-ET", "አማርኛ"),
+                                        ("yo-NG", "Yorùbá"),
+                                        ("bn-BD", "বাংলা"),
+                                        ("zh-CN", "普通话"),
+                                        ("et-EE", "Eesti"),
+                                        ("fi-FI", "Suomi"),
+                                        ("sv-SE", "Svenska"),
+                                        ("nb-NO", "Norsk"),
+                                        ("uk-UA", "Українська"),
+                                        ("th-TH", "ไทย"),
+                                        ("id-ID", "Bahasa Indonesia"),
+                                        ("tl-PH", "Tagalog"),
+                                        ("ms-MY", "Bahasa Melayu"),
+                                        ("jv-ID", "Basa Jawa"),
+                                        ("el-GR", "Ελληνικά"),
+                                        ("la-VA", "Latina"),
+                                        ("he-IL", "עברית"),
+                                        ("ga-IE", "Gaeilge")
+                                    };
+                                    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+                                }
+                                @foreach (var language in languages)
+                                {
+                                    <li>
+                                        <form method="post" asp-controller="Home" asp-action="SetLanguage" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                            <input type="hidden" name="culture" value="@language.Item1" />
+                                            <button type="submit" class="dropdown-item">@language.Item2</button>
+                                        </form>
+                                    </li>
+                                }
+                            </ul>
+                        </li>
                         @if (User.Identity?.IsAuthenticated == true)
                         {
                             <li class="nav-item">
@@ -44,14 +106,14 @@
                             <li class="nav-item">
                                 <form method="post" asp-controller="Account" asp-action="Logout" class="d-inline">
                                     @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-link nav-link text-white">Logout</button>
+                                    <button type="submit" class="btn btn-link nav-link text-white">@L["NavLogout"]</button>
                                 </form>
                             </li>
                         }
                         else
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-white" asp-controller="Account" asp-action="Login">Admin Login</a>
+                                <a class="nav-link text-white" asp-controller="Account" asp-action="Login">@L["NavAdminLogin"]</a>
                             </li>
                         }
                     </ul>
@@ -67,8 +129,8 @@
 
     <footer class="border-top footer text-muted mt-4">
         <div class="container">
-            &copy; 2026 — OCSP Server &mdash;
-            <a asp-controller="Home" asp-action="Privacy">Privacy</a>
+            &copy; 2026 — @L["SiteName"] &mdash;
+            <a asp-controller="Home" asp-action="Privacy">@L["FooterPrivacy"]</a>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

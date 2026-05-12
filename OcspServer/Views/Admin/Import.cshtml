@@ -1,9 +1,9 @@
 @model OcspServer.Controllers.ImportViewModel
 @{
-    ViewData["Title"] = "Import Certificate Data";
+    ViewData["Title"] = L["ImportPageTitle"];
 }
 
-<h1 class="h3 mb-4">Import Certificate Data</h1>
+<h1 class="h3 mb-4">@L["ImportHeading"]</h1>
 
 @if (!string.IsNullOrEmpty(Model?.StatusMessage))
 {
@@ -13,17 +13,17 @@
 <ul class="nav nav-tabs mb-4" id="importTabs" role="tablist">
     <li class="nav-item">
         <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-indexfile">
-            OpenSSL index.txt
+            @L["ImportTabOpenSslIndex"]
         </button>
     </li>
     <li class="nav-item">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-textfile">
-            Text File
+            @L["ImportTabTextFile"]
         </button>
     </li>
     <li class="nav-item">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-proxy">
-            Live OCSP Proxy
+            @L["ImportTabLiveOcspProxy"]
         </button>
     </li>
 </ul>
@@ -33,39 +33,39 @@
     <!-- index.txt -->
     <div class="tab-pane fade show active" id="tab-indexfile">
         <div class="card">
-            <div class="card-header">Import from OpenSSL CA index.txt</div>
+            <div class="card-header">@L["ImportFromIndexHeader"]</div>
             <div class="card-body">
                 <p class="text-muted small">
-                    Standard OpenSSL CA database format produced by <code>openssl ca</code> on the offline OpenBSD CA.
-                    Each line: <code>Flag TAB ExpDate TAB RevDate TAB Serial TAB Filename TAB Subject</code>
+                    @L["ImportIndexDescriptionLine1"] <code>openssl ca</code> @L["ImportIndexDescriptionLine2"]
+                    @L["ImportIndexDescriptionLine3"] <code>Flag TAB ExpDate TAB RevDate TAB Serial TAB Filename TAB Subject</code>
                 </p>
                 <form method="post"
                       asp-controller="Admin" asp-action="ImportIndexFile"
                       enctype="multipart/form-data">
                     @Html.AntiForgeryToken()
                     <div class="mb-3">
-                        <label class="form-label">index.txt file</label>
+                        <label class="form-label">@L["ImportIndexFileLabel"]</label>
                         <input type="file" name="file" class="form-control" required />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Issuer DN <span class="text-muted">(optional)</span></label>
+                        <label class="form-label">@L["ImportIssuerDnLabel"] <span class="text-muted">(@L["Optional"])</span></label>
                         <input type="text" name="issuerDn" class="form-control font-monospace"
                                placeholder="e.g. /C=US/O=My CA/CN=Root CA" />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Issuer Key Hash SHA-1 (hex) <span class="text-muted">(optional)</span></label>
+                        <label class="form-label">@L["ImportIssuerKeyHashSha1Label"] <span class="text-muted">(@L["Optional"])</span></label>
                         <input type="text" name="issuerKeyHashSha1" class="form-control font-monospace"
                                placeholder="40 hex chars" maxlength="40" />
                         <div class="form-text">
-                            Get from: <code>openssl x509 -in ca.crt -noout -pubkey | openssl dgst -sha1</code>
+                            @L["ImportGetFrom"] <code>openssl x509 -in ca.crt -noout -pubkey | openssl dgst -sha1</code>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Issuer Key Hash SHA-256 (hex) <span class="text-muted">(optional)</span></label>
+                        <label class="form-label">@L["ImportIssuerKeyHashSha256Label"] <span class="text-muted">(@L["Optional"])</span></label>
                         <input type="text" name="issuerKeyHashSha256" class="form-control font-monospace"
                                placeholder="64 hex chars" maxlength="64" />
                     </div>
-                    <button type="submit" class="btn btn-primary">Import index.txt</button>
+                    <button type="submit" class="btn btn-primary">@L["ImportIndexButton"]</button>
                 </form>
             </div>
         </div>
@@ -74,28 +74,28 @@
     <!-- Text file -->
     <div class="tab-pane fade" id="tab-textfile">
         <div class="card">
-            <div class="card-header">Import from Text File</div>
+            <div class="card-header">@L["ImportFromTextHeader"]</div>
             <div class="card-body">
                 <p class="text-muted small">
-                    Simple text format: one certificate per line.
-                    Format: <code>SERIAL  STATUS  [REVDATE]</code><br />
-                    STATUS values: <code>good</code>, <code>revoked</code>, <code>unknown</code><br />
-                    Example: <code>0A1B2C  revoked  2024-06-01T00:00:00Z</code>
+                    @L["ImportTextDescriptionLine1"]
+                    @L["ImportTextDescriptionLine2"] <code>SERIAL  STATUS  [REVDATE]</code><br />
+                    @L["ImportTextDescriptionLine3"] <code>good</code>, <code>revoked</code>, <code>unknown</code><br />
+                    @L["ImportTextDescriptionLine4"] <code>0A1B2C  revoked  2024-06-01T00:00:00Z</code>
                 </p>
                 <form method="post"
                       asp-controller="Admin" asp-action="ImportTextFile"
                       enctype="multipart/form-data">
                     @Html.AntiForgeryToken()
                     <div class="mb-3">
-                        <label class="form-label">Text file</label>
+                        <label class="form-label">@L["ImportTextFileLabel"]</label>
                         <input type="file" name="file" class="form-control" required />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Issuer Key Hash SHA-1 (hex) <span class="text-muted">(optional)</span></label>
+                        <label class="form-label">@L["ImportIssuerKeyHashSha1Label"] <span class="text-muted">(@L["Optional"])</span></label>
                         <input type="text" name="issuerKeyHashSha1" class="form-control font-monospace"
                                placeholder="40 hex chars" maxlength="40" />
                     </div>
-                    <button type="submit" class="btn btn-primary">Import Text File</button>
+                    <button type="submit" class="btn btn-primary">@L["ImportTextButton"]</button>
                 </form>
             </div>
         </div>
@@ -104,34 +104,34 @@
     <!-- OCSP proxy -->
     <div class="tab-pane fade" id="tab-proxy">
         <div class="card">
-            <div class="card-header">Sync from Local OCSP Responder</div>
+            <div class="card-header">@L["ImportSyncFromProxyHeader"]</div>
             <div class="card-body">
                 <p class="text-muted small">
-                    Provide a DER-encoded OCSPRequest (hex) and the base URL of a running
-                    <code>openssl ocsp</code> instance to pull live status updates.
+                    @L["ImportProxyDescriptionLine1"]
+                    <code>openssl ocsp</code> @L["ImportProxyDescriptionLine2"]
                 </p>
                 <form method="post" asp-controller="Admin" asp-action="ImportOcspProxy">
                     @Html.AntiForgeryToken()
                     <div class="mb-3">
-                        <label class="form-label">Responder URL</label>
+                        <label class="form-label">@L["ImportResponderUrlLabel"]</label>
                         <input type="url" name="responderUrl" class="form-control"
                                placeholder="http://127.0.0.1:2560" required />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">OCSPRequest (DER hex)</label>
+                        <label class="form-label">@L["ImportOcspRequestHexLabel"]</label>
                         <textarea name="requestHex" class="form-control font-monospace"
                                   rows="4" placeholder="3082..." required></textarea>
                         <div class="form-text">
-                            Generate with:
+                            @L["ImportGenerateWith"]
                             <code>openssl ocsp -issuer ca.crt -cert leaf.crt -reqout req.der &amp;&amp; xxd -p req.der</code>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Issuer Key Hash SHA-1 (hex)</label>
+                        <label class="form-label">@L["ImportIssuerKeyHashSha1Label"]</label>
                         <input type="text" name="issuerKeyHashSha1" class="form-control font-monospace"
                                placeholder="40 hex chars" maxlength="40" required />
                     </div>
-                    <button type="submit" class="btn btn-primary">Sync Now</button>
+                    <button type="submit" class="btn btn-primary">@L["ImportSyncNowButton"]</button>
                 </form>
             </div>
         </div>
