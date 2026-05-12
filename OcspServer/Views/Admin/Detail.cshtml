@@ -1,12 +1,12 @@
 @model OcspServer.Models.CertificateRecord
 @using OcspServer.Models
 @{
-    ViewData["Title"] = $"Certificate {Model.SerialNumber}";
+    ViewData["Title"] = L["DetailPageTitle", Model.SerialNumber];
 }
 
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a asp-controller="Admin" asp-action="Certificates">Certificates</a></li>
+        <li class="breadcrumb-item"><a asp-controller="Admin" asp-action="Certificates">@L["CertificatesHeading"]</a></li>
         <li class="breadcrumb-item active">@Model.SerialNumber</li>
     </ol>
 </nav>
@@ -21,12 +21,12 @@
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="h4">Certificate Detail</h2>
+    <h2 class="h4">@L["DetailHeading"]</h2>
     <div>
         @if (Model.Status != CertificateStatus.Revoked)
         {
             <a asp-controller="Admin" asp-action="Revoke"
-               asp-route-id="@Model.Id" class="btn btn-danger btn-sm">Revoke</a>
+               asp-route-id="@Model.Id" class="btn btn-danger btn-sm">@L["RevokeButton"]</a>
         }
         @if (Model.Status == CertificateStatus.Revoked &&
              Model.RevocationReason == RevocationReason.CertificateHold)
@@ -37,8 +37,8 @@
                   class="d-inline">
                 @Html.AntiForgeryToken()
                 <button type="submit" class="btn btn-warning btn-sm"
-                        onclick="return confirm('Reinstate this certificate?')">
-                    Reinstate
+                        onclick="return confirm('@L["DetailConfirmReinstate"]')">
+                    @L["ReinstateButton"]
                 </button>
             </form>
         }
@@ -46,68 +46,68 @@
 </div>
 
 <dl class="row">
-    <dt class="col-sm-3">Serial Number</dt>
+    <dt class="col-sm-3">@L["DetailSerialNumber"]</dt>
     <dd class="col-sm-9"><code>@Model.SerialNumber</code></dd>
 
-    <dt class="col-sm-3">Status</dt>
+    <dt class="col-sm-3">@L["CertificatesStatus"]</dt>
     <dd class="col-sm-9">
         @switch (Model.Status)
         {
             case CertificateStatus.Good:
-                <span class="badge bg-success fs-6">Good</span>
+                <span class="badge bg-success fs-6">@L["StatusGood"]</span>
                 break;
             case CertificateStatus.Revoked:
-                <span class="badge bg-danger fs-6">Revoked</span>
+                <span class="badge bg-danger fs-6">@L["StatusRevoked"]</span>
                 break;
             default:
-                <span class="badge bg-warning text-dark fs-6">Unknown</span>
+                <span class="badge bg-warning text-dark fs-6">@L["StatusUnknown"]</span>
                 break;
         }
     </dd>
 
     @if (Model.Status == CertificateStatus.Revoked)
     {
-        <dt class="col-sm-3">Revocation Date</dt>
-        <dd class="col-sm-9">@(Model.RevocationDate?.ToString("yyyy-MM-dd HH:mm:ss UTC") ?? "—")</dd>
+        <dt class="col-sm-3">@L["CertificatesRevocationDate"]</dt>
+        <dd class="col-sm-9">@(Model.RevocationDate?.ToString("yyyy-MM-dd HH:mm:ss UTC") ?? L["NotAvailableDash"].Value)</dd>
 
-        <dt class="col-sm-3">Revocation Reason</dt>
+        <dt class="col-sm-3">@L["DetailRevocationReason"]</dt>
         <dd class="col-sm-9">@Model.RevocationReason</dd>
     }
 
-    <dt class="col-sm-3">Subject DN</dt>
+    <dt class="col-sm-3">@L["CertificatesSubject"]</dt>
     <dd class="col-sm-9"><code>@Model.SubjectDN</code></dd>
 
-    <dt class="col-sm-3">Issuer DN</dt>
+    <dt class="col-sm-3">@L["DetailIssuerDn"]</dt>
     <dd class="col-sm-9"><code>@Model.IssuerDN</code></dd>
 
-    <dt class="col-sm-3">Issuer Key Hash (SHA-1)</dt>
+    <dt class="col-sm-3">@L["DetailIssuerKeyHashSha1"]</dt>
     <dd class="col-sm-9"><code>@Model.IssuerKeyHashSha1</code></dd>
 
-    <dt class="col-sm-3">Issuer Key Hash (SHA-256)</dt>
+    <dt class="col-sm-3">@L["DetailIssuerKeyHashSha256"]</dt>
     <dd class="col-sm-9"><code>@Model.IssuerKeyHashSha256</code></dd>
 
-    <dt class="col-sm-3">Not Before</dt>
-    <dd class="col-sm-9">@(Model.NotBefore == DateTime.MinValue ? "—" : Model.NotBefore.ToString("yyyy-MM-dd HH:mm:ss UTC"))</dd>
+    <dt class="col-sm-3">@L["DetailNotBefore"]</dt>
+    <dd class="col-sm-9">@(Model.NotBefore == DateTime.MinValue ? L["NotAvailableDash"].Value : Model.NotBefore.ToString("yyyy-MM-dd HH:mm:ss UTC"))</dd>
 
-    <dt class="col-sm-3">Not After</dt>
-    <dd class="col-sm-9">@(Model.NotAfter == DateTime.MinValue ? "—" : Model.NotAfter.ToString("yyyy-MM-dd HH:mm:ss UTC"))</dd>
+    <dt class="col-sm-3">@L["DetailNotAfter"]</dt>
+    <dd class="col-sm-9">@(Model.NotAfter == DateTime.MinValue ? L["NotAvailableDash"].Value : Model.NotAfter.ToString("yyyy-MM-dd HH:mm:ss UTC"))</dd>
 
-    <dt class="col-sm-3">Import Source</dt>
+    <dt class="col-sm-3">@L["DetailImportSource"]</dt>
     <dd class="col-sm-9">@Model.ImportSource</dd>
 
-    <dt class="col-sm-3">Last Updated</dt>
+    <dt class="col-sm-3">@L["DetailLastUpdated"]</dt>
     <dd class="col-sm-9">@Model.LastUpdated.ToString("yyyy-MM-dd HH:mm:ss UTC")</dd>
 </dl>
 
 <hr />
-<h5>Admin Notes</h5>
+<h5>@L["DetailAdminNotes"]</h5>
 <form method="post"
       asp-controller="Admin" asp-action="UpdateNotes"
       asp-route-id="@Model.Id">
     @Html.AntiForgeryToken()
     <div class="mb-3">
         <textarea name="notes" class="form-control" rows="3"
-                  placeholder="Optional notes…">@Model.Notes</textarea>
+                  placeholder="@L["DetailNotesPlaceholder"]">@Model.Notes</textarea>
     </div>
-    <button type="submit" class="btn btn-secondary btn-sm">Save Notes</button>
+    <button type="submit" class="btn btn-secondary btn-sm">@L["DetailSaveNotes"]</button>
 </form>

@@ -1,6 +1,9 @@
 using OcspServer.Extensions;
 using OcspServer.Models.Settings;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.Extensions.Options;
 using OcspServer.Services.CertificateStore;
+using System.Globalization;
 
 namespace OcspServer
 {
@@ -56,8 +59,27 @@ namespace OcspServer
             builder.Services.AddOcspServices(configuration, logger);
             builder.Services.AddIngestionServices(flags.EnableIndexTxtWatch);
 
-            // ── MVC ────────────────────────────────────────────────────────
-            builder.Services.AddControllersWithViews();
+            // ── Localization + MVC ────────────────────────────────────────
+            var supportedCultures = new[]
+            {
+                "en-US", "de-DE", "es-ES", "fr-FR", "pt-PT", "it-IT", "zh-HK", "ko-KR", "hi-IN", "ru-RU",
+                "ar-SA", "sw-KE", "ja-JP", "ht-HT", "haw-US", "sm-WS", "mi-NZ", "af-ZA", "nl-NL", "ha-NG",
+                "am-ET", "yo-NG", "bn-BD", "zh-CN", "et-EE", "fi-FI", "sv-SE", "nb-NO", "uk-UA", "th-TH",
+                "id-ID", "tl-PH", "ms-MY", "jv-ID", "el-GR", "la-VA", "he-IL", "ga-IE"
+            }.Select(c => new CultureInfo(c)).ToArray();
+
+            builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+            builder.Services.Configure<RequestLocalizationOptions>(options =>
+            {
+                options.DefaultRequestCulture = new RequestCulture("en-US");
+                options.SupportedCultures = supportedCultures;
+                options.SupportedUICultures = supportedCultures;
+                options.ApplyCurrentCultureToResponseHeaders = true;
+            });
+
+            builder.Services.AddControllersWithViews()
+                .AddViewLocalization()
+                .AddDataAnnotationsLocalization();
             builder.Services.AddAntiforgery();
 
             logger.LogInformation("=== Service configuration complete ===");
@@ -79,6 +101,8 @@ namespace OcspServer
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
+            var requestLocalizationOptions = app.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value;
+            app.UseRequestLocalization(requestLocalizationOptions);
             app.UseRouting();
 
             if (flags.EnableSession)

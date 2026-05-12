@@ -53,6 +53,15 @@ Main features:
 - Imports certificate status data from OpenSSL `index.txt`, simple text files, and live OCSP proxy sync.
 - Stores certificate status data in SQLite.
 - Supports security hardening features such as strict headers, optional mTLS, and optional Entra ID admin authentication.
+- Supports localized MVC UI text with a language selector in the top navigation.
+
+## UI localization
+
+The web UI supports the following cultures (selectable from the **Language** menu in the site header):
+
+`en-US`, `de-DE`, `es-ES`, `fr-FR`, `pt-PT`, `it-IT`, `zh-HK`, `ko-KR`, `hi-IN`, `ru-RU`, `ar-SA`, `sw-KE`, `ja-JP`, `ht-HT`, `haw-US`, `sm-WS`, `mi-NZ`, `af-ZA`, `nl-NL`, `ha-NG`, `am-ET`, `yo-NG`, `bn-BD`, `zh-CN`, `et-EE`, `fi-FI`, `sv-SE`, `nb-NO`, `uk-UA`, `th-TH`, `id-ID`, `tl-PH`, `ms-MY`, `jv-ID`, `el-GR`, `la-VA`, `he-IL`, `ga-IE`.
+
+Language preference is stored with the ASP.NET Core culture cookie and reused on later requests.
 
 ## Applicable RFC references
 - RFC 6960 — X.509 Internet Public Key Infrastructure Online Certificate Status Protocol (OCSP).

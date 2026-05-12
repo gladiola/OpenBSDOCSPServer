@@ -1,19 +1,19 @@
 @model OcspServer.Controllers.DashboardViewModel
 @{
-    ViewData["Title"] = "OCSP Admin — Dashboard";
+    ViewData["Title"] = L["DashboardPageTitle"];
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3">Dashboard</h1>
-    <a asp-controller="Admin" asp-action="Import" class="btn btn-primary">Import Data</a>
+    <h1 class="h3">@L["DashboardHeading"]</h1>
+    <a asp-controller="Admin" asp-action="Import" class="btn btn-primary">@L["DashboardImportData"]</a>
 </div>
 
 @if (Model.SignerExpiringSoon)
 {
     <div class="alert alert-warning" role="alert">
-        <strong>Warning:</strong> The OCSP signing certificate expires on
+        <strong>@L["WarningLabel"]</strong> @L["DashboardSignerExpiresOn"]
         <strong>@Model.SignerCertExpiry?.ToString("yyyy-MM-dd HH:mm UTC")</strong>.
-        Renew it before it expires to avoid signing failures.
+        @L["DashboardRenewBeforeExpiry"]
     </div>
 }
 
@@ -27,7 +27,7 @@
         <div class="card text-bg-secondary">
             <div class="card-body">
                 <div class="fs-2 fw-bold">@Model.TotalCertificates</div>
-                <div>Total Certificates</div>
+                <div>@L["DashboardTotalCertificates"]</div>
             </div>
         </div>
     </div>
@@ -35,7 +35,7 @@
         <div class="card text-bg-success">
             <div class="card-body">
                 <div class="fs-2 fw-bold">@Model.GoodCount</div>
-                <div>Good</div>
+                <div>@L["StatusGood"]</div>
             </div>
         </div>
     </div>
@@ -43,7 +43,7 @@
         <div class="card text-bg-danger">
             <div class="card-body">
                 <div class="fs-2 fw-bold">@Model.RevokedCount</div>
-                <div>Revoked</div>
+                <div>@L["StatusRevoked"]</div>
             </div>
         </div>
     </div>
@@ -51,7 +51,7 @@
         <div class="card text-bg-warning">
             <div class="card-body">
                 <div class="fs-2 fw-bold">@Model.UnknownCount</div>
-                <div>Unknown</div>
+                <div>@L["StatusUnknown"]</div>
             </div>
         </div>
     </div>
@@ -60,32 +60,32 @@
 <div class="row g-3">
     <div class="col-md-6">
         <div class="card">
-            <div class="card-header">Certificate Store</div>
+            <div class="card-header">@L["DashboardCertificateStore"]</div>
             <div class="card-body">
                 <dl class="row mb-0">
-                    <dt class="col-sm-5">Last Import</dt>
+                    <dt class="col-sm-5">@L["DashboardLastImport"]</dt>
                     <dd class="col-sm-7">
                         @(Model.LastImportTime.HasValue
                             ? Model.LastImportTime.Value.ToString("yyyy-MM-dd HH:mm:ss UTC")
-                            : "Never")
+                            : L["DashboardNever"].Value)
                     </dd>
                 </dl>
                 <a asp-controller="Admin" asp-action="Certificates" class="btn btn-outline-primary btn-sm mt-2">
-                    View All Certificates
+                    @L["DashboardViewAllCertificates"]
                 </a>
             </div>
         </div>
     </div>
     <div class="col-md-6">
         <div class="card">
-            <div class="card-header">OCSP Signing Certificate</div>
+            <div class="card-header">@L["DashboardSignerCert"]</div>
             <div class="card-body">
                 <dl class="row mb-0">
-                    <dt class="col-sm-5">Expires</dt>
+                    <dt class="col-sm-5">@L["DashboardExpires"]</dt>
                     <dd class="col-sm-7">
                         @(Model.SignerCertExpiry.HasValue
                             ? Model.SignerCertExpiry.Value.ToString("yyyy-MM-dd HH:mm UTC")
-                            : "Not loaded")
+                            : L["DashboardNotLoaded"].Value)
                     </dd>
                 </dl>
             </div>

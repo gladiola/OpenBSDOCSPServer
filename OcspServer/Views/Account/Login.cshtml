@@ -1,5 +1,5 @@
 @{
-    ViewData["Title"] = "Admin Login";
+    ViewData["Title"] = L["LoginTitle"];
     Layout = "_Layout";
 }
 
@@ -7,7 +7,7 @@
     <div class="col-sm-8 col-md-5">
         <div class="card shadow-sm">
             <div class="card-header bg-dark text-white">
-                <h4 class="mb-0">OCSP Admin Login</h4>
+                <h4 class="mb-0">@L["LoginHeading"]</h4>
             </div>
             <div class="card-body">
                 @if (!ViewData.ModelState.IsValid)
@@ -25,17 +25,17 @@
                       asp-route-returnUrl="@ViewData["ReturnUrl"]">
                     @Html.AntiForgeryToken()
                     <div class="mb-3">
-                        <label for="username" class="form-label">Username</label>
+                        <label for="username" class="form-label">@L["LoginUsername"]</label>
                         <input type="text" id="username" name="username"
                                class="form-control" autocomplete="username"
                                autofocus required />
                     </div>
                     <div class="mb-3">
-                        <label for="password" class="form-label">Password</label>
+                        <label for="password" class="form-label">@L["LoginPassword"]</label>
                         <input type="password" id="password" name="password"
                                class="form-control" autocomplete="current-password" required />
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">Sign In</button>
+                    <button type="submit" class="btn btn-primary w-100">@L["LoginSignIn"]</button>
                 </form>
             </div>
         </div>

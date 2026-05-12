@@ -4,8 +4,10 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using OcspServer.Models.Settings;
+using OcspServer.Resources;
 
 namespace OcspServer.Controllers
 {
@@ -30,14 +32,17 @@ namespace OcspServer.Controllers
         private readonly AdminAuthSettings _authSettings;
         private readonly ILogger<AccountController> _logger;
         private readonly FeatureFlags _flags;
+        private readonly IStringLocalizer<SharedResource> _localizer;
 
         public AccountController(
             AdminAuthSettings authSettings,
             IOptionsMonitor<FeatureFlags> flagsMonitor,
+            IStringLocalizer<SharedResource> localizer,
             ILogger<AccountController> logger)
         {
             _authSettings = authSettings;
             _flags = flagsMonitor.CurrentValue;
+            _localizer = localizer;
             _logger = logger;
         }
 
@@ -73,7 +78,7 @@ namespace OcspServer.Controllers
 
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
             {
-                ModelState.AddModelError("", "Username and password are required.");
+                ModelState.AddModelError("", _localizer["ErrorUsernamePasswordRequired"]);
                 return View();
             }
 
@@ -83,7 +88,7 @@ namespace OcspServer.Controllers
                     username, HttpContext.Connection.RemoteIpAddress);
                 // Constant-time delay to mitigate brute-force timing side-channels
                 await Task.Delay(300);
-                ModelState.AddModelError("", "Invalid credentials.");
+                ModelState.AddModelError("", _localizer["ErrorInvalidCredentials"]);
                 return View();
             }
 
